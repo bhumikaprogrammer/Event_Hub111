@@ -85,6 +85,12 @@ export const LoginPage: React.FC = () => {
         <Button type="submit" loading={loading} className="w-full mt-6">
           Sign In
         </Button>
+
+        <div className="text-sm text-center mt-4">
+          <Link to="/forgot-password" className="font-medium text-primary-600 hover:underline">
+            Forgot Password?
+          </Link>
+        </div>
       </form>
 
       <div className="mt-8 text-center">
