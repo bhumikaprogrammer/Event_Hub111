@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Registration;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class RegistrationController extends Controller
 {
@@ -23,9 +25,13 @@ class RegistrationController extends Controller
             return response()->json(['message' => 'Already registered'], 400);
         }
 
+        // Generate unique data for the QR code
+        $qrCodeData = 'evt:' . $event->id . ';usr:' . $request->user()->id . ';ts:' . time() . ';' . Str::random(16);
+
         $registration = Registration::create([
             'user_id' => $request->user()->id,
             'event_id' => $event->id,
+            'qr_code_data' => $qrCodeData, // Save the QR code data
         ]);
 
         $event->increment('registered_count');
@@ -66,10 +72,22 @@ class RegistrationController extends Controller
         return response()->json($registrations);
     }
 
+    public function generateQrCode(Registration $registration)
+    {
+        // Ensure the logged-in user owns this registration
+        if (auth()->id() !== $registration->user_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $qrCode = QrCode::format('png')->size(250)->generate($registration->qr_code_data);
+
+        return response($qrCode)->header('Content-Type', 'image/png');
+    }
+
     public function myRegistrations(Request $request)
     {
         $registrations = Registration::where('user_id', $request->user()->id)
-            ->with('event')
+            ->with('event') // Eager load the event details
             ->get();
 
         return response()->json($registrations);

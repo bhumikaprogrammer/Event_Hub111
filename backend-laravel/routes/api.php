@@ -49,4 +49,5 @@ Route::middleware('auth:sanctum')->group(function () {
     // Attendee routes
     Route::post('/events/{event}/register', [RegistrationController::class, 'register']);
     Route::get('/my-registrations', [RegistrationController::class, 'myRegistrations']);
+    Route::get('/registrations/{registration}/qrcode', [RegistrationController::class, 'generateQrCode']);
 });

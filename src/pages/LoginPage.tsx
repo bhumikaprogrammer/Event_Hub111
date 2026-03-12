@@ -120,18 +120,18 @@ export const LoginPage: React.FC = () => {
         <div className="space-y-2 text-xs">
           <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
             <span className="font-medium text-gray-700">Attendee:</span>
-            <span className="text-gray-600">test@attendee.com</span>
+            <span className="text-gray-600">attendee@test.com</span>
           </div>
           <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
             <span className="font-medium text-gray-700">Organizer:</span>
-            <span className="text-gray-600">test@organizer.com</span>
+            <span className="text-gray-600">organizer@test.com</span>
           </div>
           <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
             <span className="font-medium text-gray-700">Admin:</span>
-            <span className="text-gray-600">test@admin.com</span>
+            <span className="text-gray-600">admin@test.com</span>
           </div>
           <p className="text-center text-gray-600 mt-3 pt-3 border-t border-blue-200">
-            Password: <span className="font-bold">password123</span>
+            Password: <span className="font-bold">password</span>
           </p>
         </div>
       </div>
