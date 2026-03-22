@@ -32,9 +32,11 @@ class RegistrationController extends Controller
             'user_id' => $request->user()->id,
             'event_id' => $event->id,
             'qr_code_data' => $qrCodeData, // Save the QR code data
+            'status' => 'pending', // Set default status to pending
         ]);
 
-        $event->increment('registered_count');
+        // We no longer increment registered_count here. This will be done when an organizer approves the registration.
+        // $event->increment('registered_count');
 
         return response()->json($registration, 201);
     }
@@ -88,8 +90,40 @@ class RegistrationController extends Controller
     {
         $registrations = Registration::where('user_id', $request->user()->id)
             ->with('event') // Eager load the event details
+            ->latest('created_at') // Order by most recent registration
             ->get();
 
         return response()->json($registrations);
+    }
+
+    public function approve(Request $request, Registration $registration)
+    {
+        // Ensure the authenticated user is the organizer of the event
+        $this->authorize('manage', $registration->event);
+
+        if ($registration->status !== 'pending') {
+            return response()->json(['message' => 'Registration is not pending approval'], 400);
+        }
+
+        $registration->update(['status' => 'approved']);
+
+        // Now increment the registered count for the event
+        $registration->event()->increment('registered_count');
+
+        return response()->json($registration);
+    }
+
+    public function reject(Request $request, Registration $registration)
+    {
+        // Ensure the authenticated user is the organizer of the event
+        $this->authorize('manage', $registration->event);
+
+        if ($registration->status !== 'pending') {
+            return response()->json(['message' => 'Registration is not pending approval'], 400);
+        }
+
+        $registration->update(['status' => 'rejected']);
+
+        return response()->json($registration);
     }
 }

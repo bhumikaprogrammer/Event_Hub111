@@ -18,6 +18,7 @@ class Event extends Model
         'date',
         'time',
         'venue',
+        'category',
         'type',
         'capacity',
         'registered_count',

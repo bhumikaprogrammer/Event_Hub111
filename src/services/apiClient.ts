@@ -1,10 +1,10 @@
 import axios, { AxiosInstance } from 'axios';
-import { User, Event, Registration, CheckIn } from '../types';
+import { User, Event, Registration } from '../types';
 import { convertKeys } from '../lib/caseConverter';
 
 class APIClient {
   private client: AxiosInstance;
-  private baseURL = 'http://localhost:8000/api';
+  private baseURL = '/api';
 
   constructor() {
     this.client = axios.create({
@@ -32,6 +32,15 @@ class APIClient {
     });
   }
 
+  // Generic request methods
+  get<T>(url: string, config?: any): Promise<T> {
+    return this.client.get(url, config).then(res => res.data);
+  }
+
+  post<T>(url: string, data?: any, config?: any): Promise<T> {
+    return this.client.post(url, data, config).then(res => res.data);
+  }
+
   // Auth endpoints
   async login(email: string, password: string): Promise<{ user: User; token: string }> {
     const response = await this.client.post('/login', { email, password });
@@ -52,6 +61,11 @@ class APIClient {
     await this.client.post('/logout');
   }
 
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const response = await this.client.post('/password/email', { email });
+    return response.data;
+  }
+
   // Event endpoints
   async getApprovedEvents(filters?: { date?: string; type?: string; venue?: string }): Promise<Event[]> {
     const response = await this.client.get('/events', { params: { ...filters, status: 'approved' } });
@@ -63,8 +77,13 @@ class APIClient {
     return response.data;
   }
 
-  async getOrganizerEvents(organizerId: string): Promise<Event[]> {
-    const response = await this.client.get('/events', { params: { organizerId } });
+  async getOrganizerEvents(): Promise<Event[]> {
+    const response = await this.client.get(`/my-events`);
+    return response.data;
+  }
+
+  async getEventAttendees(eventId: string): Promise<Registration[]> {
+    const response = await this.client.get(`/events/${eventId}/attendees`);
     return response.data;
   }
 
@@ -83,8 +102,8 @@ class APIClient {
     return response.data;
   }
 
-  async deleteEvent(id: string): Promise<void> {
-    await this.client.delete(`/events/${id}`);
+  async deleteEvent(eventId: string): Promise<void> {
+    await this.client.delete(`/events/${eventId}`);
   }
 
   async approveEvent(id: string): Promise<Event> {
@@ -110,6 +129,13 @@ class APIClient {
 
   async getEventRegistrations(eventId: string): Promise<Registration[]> {
     const response = await this.client.get(`/events/${eventId}/attendees`);
+    return response.data;
+  }
+
+  async getQrCodeForRegistration(registrationId: string): Promise<Blob> {
+    const response = await this.client.get(`/registrations/${registrationId}/qrcode`, {
+      responseType: 'blob',
+    });
     return response.data;
   }
 

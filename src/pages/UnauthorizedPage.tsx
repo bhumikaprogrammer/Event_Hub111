@@ -1,21 +1,22 @@
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ShieldAlert } from 'lucide-react';
+import { Button } from '../components/ui/Button';
 
 export const UnauthorizedPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
-        <AlertCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Access Denied</h1>
-        <p className="text-gray-600 mb-6">
-          You don't have permission to access this page. Please contact an administrator if you believe this is an error.
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="relative card-3d p-10 w-full max-w-md text-center animate-slide-in">
+        <div className="inline-block p-4 bg-gradient-to-br from-red-500 to-orange-600 rounded-2xl shadow-xl mb-4">
+          <ShieldAlert className="w-12 h-12 text-white" />
+        </div>
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Access Denied</h1>
+        <p className="text-gray-600 mb-8">
+          You do not have the necessary permissions to view this page.
         </p>
-        <a
-          href="/dashboard"
-          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition"
-        >
-          Go to Dashboard
-        </a>
+        <Button asChild size="lg">
+          <Link to="/dashboard">Go to Dashboard</Link>
+        </Button>
       </div>
     </div>
   );

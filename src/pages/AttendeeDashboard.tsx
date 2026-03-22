@@ -9,6 +9,53 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 
+// A new component to handle authenticated QR code image loading
+const QrCodeImage: React.FC<{ registrationId: string }> = ({ registrationId }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let objectUrl: string;
+
+    const fetchQrCode = async () => {
+      if (!registrationId) {
+        setError('Invalid registration ID.');
+        return;
+      }
+      try {
+        const blob = await apiClient.getQrCodeForRegistration(registrationId);
+        objectUrl = URL.createObjectURL(blob);
+        setImageUrl(objectUrl);
+      } catch (err) {
+        console.error('Failed to fetch QR code:', err);
+        setError('Could not load QR code.');
+      }
+    };
+
+    fetchQrCode();
+
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [registrationId]);
+
+  if (error) {
+    return <div className="w-32 h-32 md:w-40 md:h-40 flex items-center justify-center bg-gray-100 text-red-500 text-xs text-center p-2">{error}</div>;
+  }
+
+  if (!imageUrl) {
+    return (
+      <div className="w-32 h-32 md:w-40 md:h-40 flex items-center justify-center bg-gray-100">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+
+  return <img src={imageUrl} alt="QR Code for your ticket" className="w-32 h-32 md:w-40 md:h-40" />;
+};
+
 export const AttendeeDashboard: React.FC = () => {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,11 +138,7 @@ export const AttendeeDashboard: React.FC = () => {
                   </Badge>
                 </div>
                 <div className="p-4 bg-white rounded-lg">
-                  <img 
-                    src={`/api/registrations/${registration.id}/qrcode`} 
-                    alt="QR Code for your ticket" 
-                    className="w-32 h-32 md:w-40 md:h-40"
-                  />
+                  <QrCodeImage registrationId={registration.id} />
                 </div>
               </div>
             </Card>

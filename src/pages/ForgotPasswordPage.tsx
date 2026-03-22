@@ -1,49 +1,82 @@
-import { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { AuthShell } from '../components/auth/AuthShell';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Alert } from '../components/ui/Alert';
+import { ArrowLeft } from 'lucide-react';
+import { apiClient } from '../services/apiClient';
 
-export const ForgotPasswordPage = () => {
-    const [email, setEmail] = useState('');
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
+export const ForgotPasswordPage: React.FC = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-        setMessage('');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
 
-        try {
-            const response = await axios.post('/api/password/email', { email });
-            setMessage(response.data.message);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'An error occurred.');
-        }
-    };
+    try {
+      // This assumes you will add a `forgotPassword` method to your apiClient
+      const response = await apiClient.forgotPassword(email);
+      setSuccess(response.message);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="container mx-auto p-4">
-            <div className="max-w-md mx-auto bg-white p-8 border border-gray-300 rounded-lg">
-                <h1 className="text-2xl font-bold mb-6">Forgot Password</h1>
-                {message && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">{message}</div>}
-                {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">{error}</div>}
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">Email Address</label>
-                        <input
-                            type="email"
-                            id="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            required
-                        />
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                            Send Password Reset Link
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
+  return (
+    <AuthShell>
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-gray-800 mb-1">Forgot Your Password?</h2>
+        <p className="text-gray-500 mb-8">
+          No problem. Enter your email and we'll send you a reset link.
+        </p>
+      </div>
+
+      {error && (
+        <Alert variant="error" className="mb-6" dismissible onDismiss={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {success && (
+        <Alert variant="success" className="mb-6">
+          {success}
+        </Alert>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <Input
+          label="Email Address"
+          type="email"
+          name="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          required
+          disabled={!!success} // Disable input after success
+        />
+
+        <Button type="submit" loading={loading} disabled={!!success} className="w-full mt-6">
+          Send Reset Link
+        </Button>
+      </form>
+
+      <div className="mt-8 text-center">
+        <Link
+          to="/login"
+          className="font-medium text-primary-600 hover:underline inline-flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Sign In
+        </Link>
+      </div>
+    </AuthShell>
+  );
 };

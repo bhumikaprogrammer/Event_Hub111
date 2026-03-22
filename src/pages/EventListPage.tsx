@@ -15,6 +15,7 @@ export const EventListPage: React.FC = () => {
     selectedType: '',
     selectedVenue: '',
     selectedDate: '',
+    selectedCategory: '',
   });
 
   useEffect(() => {
@@ -61,6 +62,10 @@ export const EventListPage: React.FC = () => {
       filtered = filtered.filter((event) => event.date === filters.selectedDate);
     }
 
+    if (filters.selectedCategory) {
+      filtered = filtered.filter((event) => event.category === filters.selectedCategory);
+    }
+
     setFilteredEvents(filtered);
   }, [filters, events]);
 
@@ -93,6 +98,7 @@ export const EventListPage: React.FC = () => {
         selectedType={filters.selectedType}
         selectedVenue={filters.selectedVenue}
         selectedDate={filters.selectedDate}
+        selectedCategory={filters.selectedCategory}
         onFilterChange={handleFilterChange}
       />
 
