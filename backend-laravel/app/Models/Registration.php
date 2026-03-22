@@ -16,6 +16,7 @@ class Registration extends Model
         'qr_code',
         'attendance_status',
         'checked_in_at',
+        'status',
     ];
 
     protected $casts = [

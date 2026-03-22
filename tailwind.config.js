@@ -98,10 +98,7 @@ export default {
         '.input-base': {
           '@apply w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-primary-500 focus:ring-4 focus:ring-primary-200 outline-none transition': {},
         },
-        '.badge': {
-          '@apply inline-block px-3 py-1 rounded-full text-xs font-semibold bg-primary-50 text-primary-700': {},
-        },
-      });
+      })
     }
   ],
 }

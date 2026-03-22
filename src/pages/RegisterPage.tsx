@@ -60,7 +60,8 @@ export const RegisterPage: React.FC = () => {
 
   return (
     <AuthShell>
-      <p className="text-gray-600 text-center mb-6">Join us and start managing events</p>
+      <h2 className="text-2xl font-bold text-gray-800 text-center mb-1">Create an Account</h2>
+      <p className="text-gray-500 text-center mb-8">It only takes a minute to get started.</p>
 
       {error && (
         <Alert variant="error" className="mb-6" dismissible onDismiss={() => setError(null)}>

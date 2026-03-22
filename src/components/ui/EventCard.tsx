@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Users } from 'lucide-react';
+import { Calendar, MapPin, Users, Tag } from 'lucide-react';
 import { Event } from '../../types';
 import { Card } from './Card';
 import { Badge } from './Badge';
 import { Button } from './Button';
+import { apiClient } from '../../services/apiClient';
+import { useAuthStore } from '../../contexts/authStore';
 
 interface EventCardProps {
   event: Event;
@@ -12,8 +14,30 @@ interface EventCardProps {
 
 export const EventCard: React.FC<EventCardProps> = ({ event }) => {
   const navigate = useNavigate();
+  const [registrationStatus, setRegistrationStatus] = useState<'idle' | 'registering' | 'success' | 'error'>('idle');
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
+  const user = useAuthStore((state) => state.user);
+
   const availableSeats = event.capacity - event.registeredCount;
   const fillPercentage = (event.registeredCount / event.capacity) * 100;
+
+  const handleRegister = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click-through
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    setRegistrationStatus('registering');
+    setRegistrationError(null);
+    try {
+      await apiClient.registerForEvent(event.id.toString());
+      setRegistrationStatus('success');
+    } catch (err: any) {
+      setRegistrationStatus('error');
+      setRegistrationError(err.response?.data?.message || 'Registration failed.');
+    } 
+  };
 
   return (
     <Card interactive padding="none" className="overflow-hidden flex flex-col h-full">
@@ -39,6 +63,10 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
             <span className="line-clamp-1">{event.venue}</span>
           </div>
           <div className="flex items-center gap-2">
+            <Tag className="w-4 h-4 text-primary-500" />
+            <span>{event.category}</span>
+          </div>
+          <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-primary-500" />
             <span>
               {event.registeredCount}/{event.capacity} registered
@@ -53,13 +81,24 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
           ></div>
         </div>
 
+        {registrationError && (
+          <p className="text-xs text-red-600 text-center mb-2">{registrationError}</p>
+        )}
+
         <div className="flex gap-2">
           <Button variant="secondary" size="md" onClick={() => navigate(`/events/${event.id}`)} className="flex-1">
             View Details
           </Button>
           {availableSeats > 0 ? (
-            <Button variant="primary" size="md" className="flex-1">
-              Register
+            <Button
+              variant={registrationStatus === 'success' ? 'success' : 'primary'}
+              size="md"
+              className="flex-1"
+              onClick={handleRegister}
+              loading={registrationStatus === 'registering'}
+              disabled={registrationStatus === 'success'}
+            >
+              {registrationStatus === 'success' ? 'Registered' : 'Register'}
             </Button>
           ) : (
             <Button variant="outline" size="md" disabled className="flex-1">

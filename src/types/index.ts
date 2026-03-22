@@ -15,6 +15,7 @@ export interface Event {
   date: string;
   time: string;
   venue: string;
+  category: string;
   type: string;
   capacity: number;
   registeredCount: number;
@@ -31,6 +32,7 @@ export interface Registration {
   eventId: string;
   registeredAt: string;
   attendanceStatus: 'registered' | 'checked_in' | 'no_show';
+  status: 'pending' | 'approved' | 'rejected';
   qrCode: string;
   user?: User;
   event?: Event;

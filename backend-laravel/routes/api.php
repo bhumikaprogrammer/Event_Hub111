@@ -35,8 +35,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/events', [EventController::class, 'store']);
         Route::put('/events/{event}', [EventController::class, 'update']);
         Route::delete('/events/{event}', [EventController::class, 'destroy']);
-        Route::get('/events/{event}/attendees', [RegistrationController::class, 'attendees']);
+        Route::get('/events/{event}/attendees', [EventController::class, 'getAttendees']);
         Route::post('/check-in', [RegistrationController::class, 'checkIn']);
+        Route::get('/my-events', [EventController::class, 'myEvents']); // New route for organizers
+        Route::post('/registrations/{registration}/approve', [RegistrationController::class, 'approve']);
+        Route::post('/registrations/{registration}/reject', [RegistrationController::class, 'reject']);
     });
 
     // Admin only

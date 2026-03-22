@@ -76,7 +76,25 @@ class EventController extends Controller
         $this->authorize('delete', $event);
         $event->delete();
 
-        return response()->json(['message' => 'Event deleted successfully']);
+        return response()->json(['message' => 'Event rejected successfully']);
+    }
+
+    public function myEvents(Request $request)
+    {
+        $events = Event::where('organizer_id', $request->user()->id)->latest()->get();
+        return response()->json($events);
+    }
+
+    public function getAttendees(Request $request, Event $event)
+    {
+        if ($request->user()->id !== $event->organizer_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Eager load specific user details for each registration
+        $attendees = $event->registrations()->with('user:id,name,email')->get();
+
+        return response()->json($attendees);
     }
 
     public function approve(Event $event)

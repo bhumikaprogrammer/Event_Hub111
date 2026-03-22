@@ -8,6 +8,7 @@ interface FilterBarProps {
   selectedType: string;
   selectedVenue: string;
   selectedDate: string;
+  selectedCategory: string;
   onFilterChange: (key: string, value: string) => void;
 }
 
@@ -16,6 +17,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   selectedType,
   selectedVenue,
   selectedDate,
+  selectedCategory,
   onFilterChange,
 }) => {
   return (
@@ -61,6 +63,17 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           type="date"
           value={selectedDate}
           onChange={(e) => onFilterChange('selectedDate', e.target.value)}
+        />
+
+        <Select
+          label="Category"
+          value={selectedCategory}
+          onChange={(e) => onFilterChange('selectedCategory', e.target.value)}
+          options={[
+            { label: 'All Categories', value: '' },
+            { label: 'College', value: 'College' },
+            { label: 'Groups', value: 'Groups' },
+          ]}
         />
       </div>
     </div>
