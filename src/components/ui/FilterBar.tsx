@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, Filter } from 'lucide-react';
 import { Input } from './Input';
-import { Select } from './Select';
+import { Select } from '../Select';
 
 interface FilterBarProps {
   searchTerm: string;

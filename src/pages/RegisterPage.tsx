@@ -5,7 +5,7 @@ import { apiClient } from '../services/apiClient';
 import { AuthShell } from '../components/auth/AuthShell';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
+import { Select } from '../components/Select';
 import { Alert } from '../components/ui/Alert';
 import { UserRole } from '../types';
 
