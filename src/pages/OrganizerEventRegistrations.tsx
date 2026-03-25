@@ -67,11 +67,13 @@ export const OrganizerEventRegistrations: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="mb-6 flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="text-primary-600 dark:text-primary-400 hover:underline text-sm">
-          ← Back
-        </button>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Event Registrations</h1>
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="text-primary-600 dark:text-primary-400 hover:underline text-sm">
+            ← Back
+          </button>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Event Registrations</h1>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4 mb-6">

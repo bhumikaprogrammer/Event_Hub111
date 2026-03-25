@@ -82,7 +82,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, existingRegistratio
               {event.registeredCount}/{event.capacity} registered
             </span>
           </div>
-          {isOrganizer && (
+          {(isOrganizer || user?.role === 'admin') && (
             <div className="flex items-center gap-2 mt-1">
               <Badge variant={event.status === 'approved' ? 'success' : event.status === 'rejected' ? 'error' : 'warning'}>
                 {event.status.charAt(0).toUpperCase() + event.status.slice(1)}

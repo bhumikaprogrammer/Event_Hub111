@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, CheckCircle, Clock, Ticket } from 'lucide-react';
+import { Calendar, MapPin, CheckCircle, Clock, Ticket, Download } from 'lucide-react';
 import { Registration } from '../types';
 import { useAuthStore } from '../contexts/authStore';
 import { apiClient } from '../services/apiClient';
@@ -8,53 +8,6 @@ import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-
-// A new component to handle authenticated QR code image loading
-const QrCodeImage: React.FC<{ registrationId: string }> = ({ registrationId }) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let objectUrl: string;
-
-    const fetchQrCode = async () => {
-      if (!registrationId) {
-        setError('Invalid registration ID.');
-        return;
-      }
-      try {
-        const blob = await apiClient.getQrCodeForRegistration(registrationId);
-        objectUrl = URL.createObjectURL(blob);
-        setImageUrl(objectUrl);
-      } catch (err) {
-        console.error('Failed to fetch QR code:', err);
-        setError('Could not load QR code.');
-      }
-    };
-
-    fetchQrCode();
-
-    return () => {
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
-    };
-  }, [registrationId]);
-
-  if (error) {
-    return <div className="w-32 h-32 md:w-40 md:h-40 flex items-center justify-center bg-gray-100 text-red-500 text-xs text-center p-2">{error}</div>;
-  }
-
-  if (!imageUrl) {
-    return (
-      <div className="w-32 h-32 md:w-40 md:h-40 flex items-center justify-center bg-gray-100">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
-      </div>
-    );
-  }
-
-  return <img src={imageUrl} alt="QR Code for your ticket" className="w-32 h-32 md:w-40 md:h-40" />;
-};
 
 export const AttendeeDashboard: React.FC = () => {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
@@ -125,9 +78,9 @@ export const AttendeeDashboard: React.FC = () => {
             <Card key={registration.id} interactive padding="md">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">{registration.event?.title}</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{registration.event?.title}</h3>
 
-                  <div className="space-y-2 text-gray-600 mb-4">
+                  <div className="space-y-2 text-gray-600 dark:text-gray-400 mb-4">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-5 h-5 text-primary-500" />
                       <span>
@@ -140,29 +93,55 @@ export const AttendeeDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <Badge
-                      variant={registration.attendanceStatus === 'checked_in' ? 'success' : 'neutral'}
-                      className="inline-flex items-center gap-2 capitalize"
-                    >
-                      {getStatusIcon(registration.attendanceStatus)} {registration.attendanceStatus.replace('_', ' ')}
-                    </Badge>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {registration.status === 'pending' ? (
+                        <Badge variant="warning">Pending Approval</Badge>
+                      ) : (
+                        <Badge
+                          variant={registration.attendanceStatus === 'checked_in' ? 'success' : 'neutral'}
+                          className="inline-flex items-center gap-2 capitalize"
+                        >
+                          {getStatusIcon(registration.attendanceStatus)} {registration.attendanceStatus.replace('_', ' ')}
+                        </Badge>
+                      )}
+                    </div>
                     {registration.status === 'pending' && (
-                      <Badge variant="warning" className="capitalize">Pending Approval</Badge>
-                    )}
-                    {registration.status === 'pending' && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleCancel(registration.id)}
-                      >
-                        Cancel Registration
-                      </Button>
+                      <div>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="text-xs py-1 px-3"
+                          onClick={() => handleCancel(registration.id)}
+                        >
+                          Cancel Registration
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
-                <div className="p-4 bg-white rounded-lg">
-                  <QrCodeImage registrationId={registration.id} />
+                <div className="p-4 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                  {registration.status === 'pending' ? (
+                    <div className="w-32 h-32 md:w-40 md:h-40 flex items-center justify-center text-center text-sm text-yellow-600 dark:text-yellow-400 font-medium p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                      Waiting for Approval
+                    </div>
+                  ) : registration.qrCodeImage ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <img src={registration.qrCodeImage} alt="QR Code for your ticket" className="w-32 h-32 md:w-40 md:h-40" />
+                      <a
+                        href={registration.qrCodeImage}
+                        download={`ticket-${registration.id}.png`}
+                        className="flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                      >
+                        <Download className="w-3 h-3" />
+                        Download
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="w-32 h-32 md:w-40 md:h-40 flex items-center justify-center bg-gray-100 dark:bg-gray-600 text-gray-400 text-xs text-center p-2">
+                      QR code unavailable
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>

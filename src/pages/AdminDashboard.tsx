@@ -133,7 +133,7 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                     <p className="text-gray-600 dark:text-gray-400 mb-3">{event.description}</p>
                     <div className="flex flex-wrap gap-3 text-sm text-gray-600 dark:text-gray-400">
-                      <span>📅 {event.date} at {event.time}</span>
+                      <span>📅 {new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(`1970-01-01T${event.time}`).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                       <span>📍 {event.venue}</span>
                       <span>👥 {event.capacity} capacity</span>
                     </div>

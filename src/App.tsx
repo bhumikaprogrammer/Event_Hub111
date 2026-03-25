@@ -17,6 +17,7 @@ import { OrganizerEventAnalytics } from './pages/OrganizerEventAnalytics';
 import { OrganizerEventRegistrations } from './pages/OrganizerEventRegistrations';
 import { RoleDashboard } from './components/RoleDashboard';
 import { CheckInScanner } from './pages/CheckInScanner';
+import { CheckInPage } from './pages/CheckInPage';
 import { CreateEventPage } from './pages/CreateEventPage';
 
 function App() {
@@ -115,9 +116,23 @@ function App() {
           />
           <Route
             path="/organizer/events/:eventId/scanner"
+            element={<Navigate to="/scanner" replace />}
+          />
+          <Route
+            path="/scanner"
             element={
               <ProtectedRoute requiredRole="organizer">
                 <CheckInScanner />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Check-in via QR URL — organizer/admin only */}
+          <Route
+            path="/checkin/:token"
+            element={
+              <ProtectedRoute>
+                <CheckInPage />
               </ProtectedRoute>
             }
           />

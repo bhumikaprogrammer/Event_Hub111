@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, Home, Calendar, User } from 'lucide-react';
+import { LogOut, Home, Calendar, User, QrCode } from 'lucide-react';
 import { useAuthStore } from '../contexts/authStore';
 import { ThemeToggle } from './ui/ThemeToggle';
 
@@ -70,6 +70,19 @@ export const Navbar: React.FC = () => {
               Dashboard
             </button>
 
+            {(user?.role === 'organizer' || user?.role === 'admin') && (
+              <button
+                onClick={() => navigate('/scanner')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all duration-200 ${
+                  isActive('/scanner')
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <QrCode className="w-5 h-5" />
+                Scanner
+              </button>
+            )}
           </div>
 
           {/* User Menu */}

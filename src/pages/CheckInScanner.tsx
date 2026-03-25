@@ -1,112 +1,143 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Html5QrcodeScanner } from 'html5-qrcode';
-import { apiClient } from '../services/apiClient';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Html5Qrcode } from 'html5-qrcode';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
+import { Camera, CameraOff, StopCircle, Upload } from 'lucide-react';
 
 export const CheckInScanner: React.FC = () => {
-  const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
-  const [scanResult, setScanResult] = useState<string | null>(null);
-  const [scanError, setScanError] = useState<string | null>(null);
-  const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const startScanner = () => {
+    setError(null);
+    setScanning(true); // show the div first, useEffect will start camera
+  };
 
   useEffect(() => {
-    const scanner = new Html5QrcodeScanner(
-      'qr-reader',
-      {
-        qrbox: {
-          width: 250,
-          height: 250,
-        },
-        fps: 5,
-      },
-      false
-    );
+    if (!scanning) return;
 
-    const onScanSuccess = async (decodedText: string) => {
-      scanner.clear();
-      setIsCheckingIn(true);
-      setScanError(null);
+    const scanner = new Html5Qrcode('qr-reader');
+    scannerRef.current = scanner;
 
-      try {
-        if (!eventId) {
-          throw new Error('Event ID is missing.');
+    Html5Qrcode.getCameras()
+      .then((cameras) => {
+        if (!cameras || cameras.length === 0) {
+          setError('No camera found on this device.');
+          setScanning(false);
+          return;
         }
-        const registration = await apiClient.checkIn(decodedText, eventId);
-        if (registration && registration.user) {
-          setScanResult(`Success! Attendee ${registration.user.name} checked in.`);
-        } else {
-          throw new Error('Invalid registration data received.');
-        }
-      } catch (error: any) {
-        const errorMessage = error.response?.data?.message || 'Invalid QR Code or already checked in.';
-        setScanError(errorMessage);
-      } finally {
-        setIsCheckingIn(false);
-      }
-    };
-
-    const onScanFailure = () => {
-      // This is called frequently, so we don't want to set state here.
-      // console.warn(`QR scan error: ${error}`);
-    };
-
-    scanner.render(onScanSuccess, onScanFailure);
+        const camera = cameras.find(c => /back|rear|environment/i.test(c.label)) ?? cameras[0];
+        return scanner.start(
+          camera.id,
+          { fps: 15, qrbox: { width: 250, height: 250 } },
+          (decodedText: string) => {
+            const token = decodedText.includes('/checkin/')
+              ? decodedText.split('/checkin/')[1]
+              : decodedText;
+            scanner.stop().then(() => navigate(`/checkin/${token}`));
+          },
+          () => {}
+        );
+      })
+      .catch((err: any) => {
+        setError(err?.message || 'Could not access camera. Please allow camera permissions and try again.');
+        setScanning(false);
+      });
 
     return () => {
-      scanner.clear().catch(error => {
-        console.error("Failed to clear html5-qrcode scanner.", error);
-      });
+      safeStop(scanner).catch(() => {});
     };
-  }, [eventId]);
+  }, [scanning, navigate]);
 
-  const resetScanner = () => {
-    setScanResult(null);
-    setScanError(null);
-    // The scanner will be re-rendered by the useEffect hook
-    window.location.reload();
+  const safeStop = (scanner: Html5Qrcode) => {
+    if (scanner.isScanning) return scanner.stop();
+    return Promise.resolve();
+  };
+
+  const stopScanner = () => {
+    if (scannerRef.current) safeStop(scannerRef.current).catch(() => {});
+    setScanning(false);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    const scanner = new Html5Qrcode('qr-reader-file');
+    try {
+      const decodedText = await scanner.scanFile(file, false);
+      const token = decodedText.includes('/checkin/')
+        ? decodedText.split('/checkin/')[1]
+        : decodedText;
+      navigate(`/checkin/${token}`);
+    } catch {
+      setError('Could not read a QR code from this image.');
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   return (
     <DashboardLayout>
       <div className="mb-6">
-        <Button variant="ghost" onClick={() => navigate(`/organizer/events/${eventId}/attendees`)} className="mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Attendees
-        </Button>
-        <h1 className="text-3xl font-bold">QR Code Check-In</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">QR Code Scanner</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">Scan an attendee's QR code to check them in</p>
       </div>
-
+      <div className="max-w-lg mx-auto">
       <Card>
-        <div id="qr-reader" className="w-full"></div>
-        
-        {isCheckingIn && (
-          <div className="mt-4 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Verifying ticket...</p>
+        <div id="qr-reader" className={scanning ? 'w-full' : 'hidden'} />
+        <div id="qr-reader-file" className="hidden" />
+
+        {!scanning && (
+          <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <Camera className="w-16 h-16 text-gray-300 dark:text-gray-600" />
+            {error && (
+              <div className="flex items-center gap-2 text-red-500 text-sm">
+                <CameraOff className="w-4 h-4" />
+                <span>{error}</span>
+              </div>
+            )}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={startScanner}>
+                <span className="flex items-center gap-2">
+                  <Camera className="w-4 h-4" />
+                  Scan from Camera
+                </span>
+              </Button>
+              <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
+                <span className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  Upload QR Image
+                </span>
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+            </div>
           </div>
         )}
 
-        {scanResult && (
-          <div className="mt-4 p-4 bg-green-100 text-green-800 rounded-lg text-center">
-            <CheckCircle className="w-12 h-12 mx-auto mb-2" />
-            <p className="font-semibold">{scanResult}</p>
-            <Button onClick={resetScanner} className="mt-4">Scan Next Ticket</Button>
-          </div>
-        )}
-
-        {scanError && (
-          <div className="mt-4 p-4 bg-red-100 text-red-800 rounded-lg text-center">
-            <XCircle className="w-12 h-12 mx-auto mb-2" />
-            <p className="font-semibold">{scanError}</p>
-            <Button onClick={resetScanner} className="mt-4">Try Again</Button>
+        {scanning && (
+          <div className="mt-4 flex justify-center">
+            <Button variant="destructive" onClick={stopScanner}>
+              <span className="flex items-center gap-2">
+                <StopCircle className="w-4 h-4" />
+                Stop Camera
+              </span>
+            </Button>
           </div>
         )}
       </Card>
+      </div>
     </DashboardLayout>
   );
 };

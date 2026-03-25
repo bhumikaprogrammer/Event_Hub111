@@ -108,7 +108,7 @@ export const OrganizerDashboard: React.FC = () => {
                 <Button variant="outline" size="sm" onClick={() => navigate(`/organizer/events/${event.id}/registrations`)}>
                   <span className="flex items-center gap-1.5"><Eye className="w-4 h-4" />Attendees</span>
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate(`/events/${event.id}/edit`)}>
+<Button variant="outline" size="sm" onClick={() => navigate(`/events/${event.id}/edit`)}>
                   <span className="flex items-center gap-1.5"><Edit className="w-4 h-4" />Edit</span>
                 </Button>
                 <Button

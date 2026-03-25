@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../contexts/authStore';
 import { apiClient } from '../services/apiClient';
 import { AuthShell } from '../components/auth/AuthShell';
@@ -17,7 +17,9 @@ export const LoginPage: React.FC = () => {
   });
 
   const navigate = useNavigate();
+  const location = useLocation();
   const setAuth = useAuthStore((state: any) => state.setAuth);
+  const from = (location.state as any)?.from?.pathname || '/dashboard';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -36,7 +38,7 @@ export const LoginPage: React.FC = () => {
       console.log('Login successful:', result);
       setAuth(result.user, result.token);
       setSuccess('Login successful!');
-      setTimeout(() => navigate('/dashboard'), 1500);
+      setTimeout(() => navigate(from, { replace: true }), 1500);
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.response?.data?.message || err.message || 'Invalid email or password');
@@ -47,8 +49,8 @@ export const LoginPage: React.FC = () => {
 
   return (
     <AuthShell>
-      <h2 className="text-2xl font-bold text-gray-800 text-center mb-1">Sign In</h2>
-      <p className="text-gray-500 text-center mb-8">Welcome back! Please enter your details.</p>
+      <h2 className="text-2xl font-bold text-gray-800 dark:text-white text-center mb-1">Sign In</h2>
+      <p className="text-gray-500 dark:text-gray-400 text-center mb-8">Welcome back! Please enter your details.</p>
 
       {error && (
         <Alert variant="error" className="mb-6" dismissible onDismiss={() => setError(null)}>
@@ -95,7 +97,7 @@ export const LoginPage: React.FC = () => {
       </form>
 
       <div className="mt-8 text-center">
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-400">
           Don't have an account?{' '}
           <Link
             to="/register"

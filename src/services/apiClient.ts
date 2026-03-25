@@ -150,10 +150,8 @@ class APIClient {
     return response.data;
   }
 
-  async getQrCodeForRegistration(registrationId: string): Promise<Blob> {
-    const response = await this.client.get(`/registrations/${registrationId}/qrcode`, {
-      responseType: 'blob',
-    });
+async getRegistrationByToken(token: string): Promise<Registration> {
+    const response = await this.client.get(`/registrations/by-token/${token}`);
     return response.data;
   }
 

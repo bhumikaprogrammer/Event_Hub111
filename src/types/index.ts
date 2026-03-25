@@ -34,6 +34,7 @@ export interface Registration {
   attendanceStatus: 'registered' | 'checked_in' | 'no_show';
   status: 'pending' | 'approved' | 'rejected';
   qrCode: string;
+  qrCodeImage?: string | null;
   user?: User;
   event?: Event;
 }
