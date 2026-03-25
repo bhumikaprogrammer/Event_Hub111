@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('event_id')->constrained()->onDelete('cascade');
-            $table->string('qr_code')->unique();
+            $table->string('qr_code')->nullable()->unique();
             $table->enum('attendance_status', ['registered', 'checked_in', 'no_show'])->default('registered');
             $table->timestamp('checked_in_at')->nullable();
             $table->timestamps();

@@ -14,6 +14,7 @@ class Registration extends Model
         'user_id',
         'event_id',
         'qr_code',
+        'qr_code_data',
         'attendance_status',
         'checked_in_at',
         'status',
@@ -35,14 +36,4 @@ class Registration extends Model
         return $this->belongsTo(Event::class);
     }
 
-    protected static function boot()
-    {
-        parent::boot();
-        
-        static::creating(function ($registration) {
-            if (empty($registration->qr_code)) {
-                $registration->qr_code = 'QR-' . strtoupper(uniqid());
-            }
-        });
-    }
 }

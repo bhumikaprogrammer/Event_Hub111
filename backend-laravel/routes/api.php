@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/registrations/{registration}/approve', [RegistrationController::class, 'approve']);
         Route::post('/registrations/{registration}/reject', [RegistrationController::class, 'reject']);
         Route::delete('/registrations/{registration}/force', [RegistrationController::class, 'destroy']);
+        Route::get('/registrations/by-token/{token}', [RegistrationController::class, 'getByToken']);
     });
 
     // Admin only

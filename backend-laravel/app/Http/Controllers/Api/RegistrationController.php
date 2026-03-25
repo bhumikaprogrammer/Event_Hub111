@@ -33,14 +33,10 @@ class RegistrationController extends Controller
             return response()->json(['message' => 'Already registered'], 400);
         }
 
-        // Generate unique data for the QR code
-        $qrCodeData = 'evt:' . $event->id . ';usr:' . $request->user()->id . ';ts:' . time() . ';' . Str::random(16);
-
         $registration = Registration::create([
             'user_id' => $request->user()->id,
             'event_id' => $event->id,
-            'qr_code_data' => $qrCodeData, // Save the QR code data
-            'status' => 'pending', // Set default status to pending
+            'status' => 'pending',
         ]);
 
         // We no longer increment registered_count here. This will be done when an organizer approves the registration.
@@ -58,10 +54,23 @@ class RegistrationController extends Controller
 
         $registration = Registration::where('qr_code', $validated['qr_code'])
             ->where('event_id', $validated['event_id'])
+            ->with('event')
             ->first();
 
         if (!$registration) {
             return response()->json(['message' => 'Invalid QR code'], 404);
+        }
+
+        if ($registration->event->organizer_id !== $request->user()->id) {
+            return response()->json(['message' => 'You are not the organizer of this event'], 403);
+        }
+
+        if ($registration->event->status !== 'approved') {
+            return response()->json(['message' => 'This event is not approved'], 422);
+        }
+
+        if ($registration->status !== 'approved') {
+            return response()->json(['message' => 'This registration is not approved'], 422);
         }
 
         if ($registration->attendance_status === 'checked_in') {
@@ -97,11 +106,23 @@ class RegistrationController extends Controller
     public function myRegistrations(Request $request)
     {
         $registrations = Registration::where('user_id', $request->user()->id)
-            ->with('event') // Eager load the event details
-            ->latest('created_at') // Order by most recent registration
+            ->with('event')
+            ->latest('created_at')
             ->get();
 
-        return response()->json($registrations);
+        $data = $registrations->map(function ($registration) {
+            $item = $registration->toArray();
+            $item['qr_code_image'] = null;
+
+            if ($registration->status === 'approved' && $registration->qr_code_data) {
+                $png = QrCode::format('png')->size(250)->generate($registration->qr_code_data);
+                $item['qr_code_image'] = 'data:image/png;base64,' . base64_encode($png);
+            }
+
+            return $item;
+        });
+
+        return response()->json($data);
     }
 
     public function cancel(Request $request, Registration $registration)
@@ -144,8 +165,39 @@ class RegistrationController extends Controller
             return response()->json(['message' => 'Registration is already approved'], 400);
         }
 
-        $registration->update(['status' => 'approved']);
+        $token = 'EVT-' . $registration->event_id . '-USR-' . $registration->user_id . '-' . Str::random(32);
+
+        $registration->update([
+            'status' => 'approved',
+            'qr_code' => $token,
+            'qr_code_data' => config('app.frontend_url') . '/checkin/' . $token,
+        ]);
         $registration->event()->increment('registered_count');
+
+        return response()->json($registration);
+    }
+
+    public function getByToken(Request $request, string $token)
+    {
+        $registration = Registration::where('qr_code', $token)
+            ->with(['user', 'event'])
+            ->first();
+
+        if (!$registration) {
+            return response()->json(['message' => 'Invalid ticket'], 404);
+        }
+
+        if ($registration->event->organizer_id !== $request->user()->id) {
+            return response()->json(['message' => 'You are not the organizer of this event'], 403);
+        }
+
+        if ($registration->event->status !== 'approved') {
+            return response()->json(['message' => 'This event is not approved'], 422);
+        }
+
+        if ($registration->status !== 'approved') {
+            return response()->json(['message' => 'This registration is not approved'], 422);
+        }
 
         return response()->json($registration);
     }
