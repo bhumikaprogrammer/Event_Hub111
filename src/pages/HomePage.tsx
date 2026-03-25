@@ -1,214 +1,293 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../contexts/authStore';
-import { Sparkles, Zap, Shield, TrendingUp, Users, Calendar, CheckCircle2, ArrowRight } from 'lucide-react';
+import { apiClient } from '../services/apiClient';
+import { Event } from '../types';
+
+function useReveal() {
+  const ref = React.useRef<HTMLElement>(null);
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const targets = [el, ...Array.from(el.querySelectorAll<HTMLElement>('.reveal'))];
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          (entry.target as HTMLElement).classList.toggle('visible', entry.isIntersecting);
+        });
+      },
+      { threshold: 0.1 }
+    );
+    targets.forEach((t) => observer.observe(t));
+    return () => observer.disconnect();
+  }, []);
+  return ref;
+}
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
+  const [events, setEvents] = React.useState<Event[]>([]);
+  const howItWorksRef = useReveal() as React.RefObject<HTMLElement>;
+  const rolesRef = useReveal() as React.RefObject<HTMLElement>;
+  const ctaRef = useReveal() as React.RefObject<HTMLElement>;
 
   React.useEffect(() => {
     if (isAuthenticated) {
-      if (user?.role === 'attendee') {
-        navigate('/dashboard');
-      } else if (user?.role === 'organizer') {
-        navigate('/organizer/dashboard');
-      } else if (user?.role === 'admin') {
-        navigate('/admin/dashboard');
-      }
+      if (user?.role === 'attendee') navigate('/dashboard');
+      else if (user?.role === 'organizer') navigate('/organizer/dashboard');
+      else if (user?.role === 'admin') navigate('/admin/dashboard');
     }
   }, [isAuthenticated, user?.role, navigate]);
 
+  React.useEffect(() => {
+    apiClient.getApprovedEvents().then((all) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const upcoming = all
+        .filter((e) => new Date(e.date) >= today)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      setEvents(upcoming);
+    }).catch(() => {});
+  }, []);
+
+  const handleEventClick = (eventId: string) => {
+    if (isAuthenticated) {
+      navigate(`/events/${eventId}`);
+    } else {
+      navigate('/login');
+    }
+  };
+
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+
+  const capacityPct = (e: Event) =>
+    Math.min(100, Math.round((e.registeredCount / e.capacity) * 100));
+
+  const statusBadge = (e: Event) => {
+    const pct = capacityPct(e);
+    if (pct >= 90) return { label: 'Almost full', cls: 'bg-yellow-100 text-yellow-700' };
+    if (pct >= 70) return { label: 'Filling up', cls: 'bg-orange-100 text-orange-700' };
+    return { label: 'Open', cls: 'bg-green-100 text-green-700' };
+  };
+
+  const barColor = (e: Event) => {
+    const pct = capacityPct(e);
+    if (pct >= 90) return 'bg-yellow-400';
+    if (pct >= 70) return 'bg-orange-400';
+    return 'bg-indigo-500';
+  };
+
+  // Duplicate for seamless infinite scroll
+  const scrollItems = events.length > 0 ? [...events, ...events] : [];
+  // ~3s per card, minimum 8s
+  const scrollDuration = Math.max(8, events.length * 3);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 overflow-hidden relative">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-pink-400/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
-      </div>
+    <div className="bg-white min-h-screen">
 
-      {/* Hero Section */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <div className="text-center mb-20 animate-slide-in">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full mb-6 border border-blue-200/50">
-            <Sparkles className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-semibold text-blue-700">Professional Event Management Platform</span>
-          </div>
+      {/* Hero */}
+      <section className="border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-6 pt-20 pb-24">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
 
-          <h1 className="text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
-            <span className="gradient-text">EventHub</span>
-            <br />
-            <span className="text-5xl text-gray-700">Transform Your Events</span>
-          </h1>
-          
-          <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-            Enterprise-grade event ticketing with QR-based check-in, real-time analytics, 
-            and seamless attendee management. Built for colleges and universities.
-          </p>
+            {/* Left */}
+            <div>
+              <p className="animate-fade-up animate-fade-up-1 text-xs font-semibold text-indigo-600 tracking-widest uppercase mb-5">
+                Campus Event Platform
+              </p>
+              <h1 className="animate-fade-up animate-fade-up-2 text-5xl lg:text-6xl font-bold text-gray-900 leading-[1.1] mb-6">
+                Run better<br />campus events.
+              </h1>
+              <p className="animate-fade-up animate-fade-up-3 text-lg text-gray-500 leading-relaxed mb-10 max-w-md">
+                Create events, register attendees, and check them in with QR codes — all in one place.
+                Built for college clubs and student organizations.
+              </p>
 
-          {!isAuthenticated && (
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <button
-                onClick={() => navigate('/login')}
-                className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:-translate-y-1 overflow-hidden"
-              >
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  Get Started Free
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              </button>
-              
-              <button
-                onClick={() => navigate('/login')}
-                className="px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border-2 border-gray-100 hover:border-blue-300"
-              >
-                Sign In
-              </button>
+              {!isAuthenticated && (
+                <div className="animate-fade-up animate-fade-up-4 flex items-center gap-6">
+                  <button
+                    onClick={() => navigate('/register')}
+                    className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+                  >
+                    Get started
+                  </button>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="text-gray-600 font-medium hover:text-gray-900 transition-colors"
+                  >
+                    Sign in →
+                  </button>
+                </div>
+              )}
             </div>
-          )}
 
-          {/* Trust Indicators */}
-          <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-              <span>Secure & Encrypted</span>
+            {/* Right: Live scrolling events */}
+            <div className="animate-fade-up animate-fade-up-5 hidden lg:block">
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 h-80 overflow-hidden relative">
+                {events.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full gap-5 px-6 select-none">
+                    {/* Ticket stub */}
+                    <div className="relative w-56 border-2 border-dashed border-gray-200 rounded-xl px-5 py-4">
+                      {/* Notch left */}
+                      <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-50 border-2 border-dashed border-gray-200" />
+                      {/* Notch right */}
+                      <div className="absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-50 border-2 border-dashed border-gray-200" />
+
+                      <p className="text-[10px] font-bold tracking-widest text-gray-300 uppercase mb-2">Upcoming</p>
+                      <p className="text-sm font-bold text-gray-300 mb-0.5">TBA</p>
+                      <p className="text-[10px] text-gray-300 tracking-wide">Venue · To be announced</p>
+                      <div className="mt-3 border-t border-dashed border-gray-200 pt-2 flex justify-between items-center">
+                        <p className="text-[9px] tracking-widest text-gray-300 uppercase">EventHub</p>
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: 8 }).map((_, i) => (
+                            <div key={i} className="w-0.5 h-3 bg-gray-200 rounded-full" />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-center">
+                      <p className="text-xs font-semibold text-gray-500">Nothing scheduled yet.</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Check back — events drop here first.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Fade edges */}
+                    <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-gray-50 to-transparent z-10 pointer-events-none" />
+                    <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-gray-50 to-transparent z-10 pointer-events-none" />
+
+                    <div
+                      className="space-y-3"
+                      style={{ animation: `scroll-up ${scrollDuration}s linear infinite` }}
+                    >
+                      {scrollItems.map((event, i) => {
+                        const badge = statusBadge(event);
+                        return (
+                          <button
+                            key={`${event.id}-${i}`}
+                            onClick={() => handleEventClick(event.id)}
+                            className="w-full bg-white border border-gray-200 rounded-xl p-4 text-left hover:border-indigo-300 hover:shadow-sm transition-all"
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="min-w-0 flex-1 pr-3">
+                                <p className="text-xs font-semibold text-indigo-600 tracking-wide mb-0.5">
+                                  {formatDate(event.date)} · {event.venue.toUpperCase()}
+                                </p>
+                                <h3 className="font-semibold text-gray-900 text-sm truncate">{event.title}</h3>
+                              </div>
+                              <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${badge.cls}`}>
+                                {badge.label}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
+                              <span>{event.registeredCount} registered</span>
+                              <span>·</span>
+                              <span>{event.capacity} capacity</span>
+                            </div>
+                            <div className="bg-gray-100 rounded-full h-1">
+                              <div
+                                className={`h-1 rounded-full ${barColor(event)}`}
+                                style={{ width: `${capacityPct(event)}%` }}
+                              />
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-              <span>Real-time Updates</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-              <span>24/7 Support</span>
-            </div>
+
           </div>
         </div>
+      </section>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mb-20">
-          <div className="group card-3d p-8 hover:scale-105 transition-all duration-300">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300 shadow-lg">
-              <Calendar className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">Event Management</h3>
-            <p className="text-gray-600 leading-relaxed">
-              Organizers can easily create, edit, and manage events. Track registrations and capacity in real-time with powerful analytics.
+      {/* How it works */}
+      <section ref={howItWorksRef as React.RefObject<HTMLElement>} className="reveal max-w-6xl mx-auto px-6 py-20">
+        <p className="text-xs font-semibold text-gray-400 tracking-widest uppercase mb-12">How it works</p>
+        <div className="grid md:grid-cols-3 gap-12">
+          <div className="reveal reveal-delay-1">
+            <p className="text-5xl font-bold text-gray-100 mb-5 select-none">01</p>
+            <h3 className="font-semibold text-gray-900 mb-2">Create an event</h3>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              Organizers submit events for admin review. Once approved, your event goes live and starts accepting registrations.
             </p>
           </div>
-
-          <div className="group card-3d p-8 hover:scale-105 transition-all duration-300">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300 shadow-lg">
-              <Zap className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">QR Code Ticketing</h3>
-            <p className="text-gray-600 leading-relaxed">
-              Attendees receive unique QR codes for each event. Lightning-fast check-in and secure attendance tracking.
+          <div className="reveal reveal-delay-2">
+            <p className="text-5xl font-bold text-gray-100 mb-5 select-none">02</p>
+            <h3 className="font-semibold text-gray-900 mb-2">Attendees register</h3>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              Each attendee gets a unique QR code ticket saved to their account. No printouts, no lost emails.
             </p>
           </div>
-
-          <div className="group card-3d p-8 hover:scale-105 transition-all duration-300">
-            <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-6 transition-transform duration-300 shadow-lg">
-              <TrendingUp className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">Analytics & Insights</h3>
-            <p className="text-gray-600 leading-relaxed">
-              Admins have full control with event approvals, user management, and comprehensive statistics.
+          <div className="reveal reveal-delay-3">
+            <p className="text-5xl font-bold text-gray-100 mb-5 select-none">03</p>
+            <h3 className="font-semibold text-gray-900 mb-2">Scan and check in</h3>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              At the door, organizers scan QR codes to verify and check in attendees in seconds.
             </p>
           </div>
         </div>
+      </section>
 
-        {/* Role-based Features */}
-        <div className="card-3d p-12 bg-gradient-to-br from-white to-gray-50">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4 text-center">
-            Built for Every Role
-          </h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            Tailored experiences for attendees, organizers, and administrators
-          </p>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Attendee */}
-            <div className="group relative bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-8 border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 hover:shadow-xl">
-              <div className="absolute top-4 right-4 w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-blue-700 mb-6">Attendees</h3>
-              <ul className="space-y-4 text-gray-700">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <span>Browse approved events</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <span>Register for events</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <span>View unique QR codes</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <span>Check-in at events</span>
-                </li>
+      {/* Role breakdown */}
+      <section className="border-t border-gray-100">
+        <div ref={rolesRef as React.RefObject<HTMLDivElement>} className="reveal max-w-6xl mx-auto px-6 py-20">
+          <p className="text-xs font-semibold text-gray-400 tracking-widest uppercase mb-12">Who it's for</p>
+          <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100 border border-gray-100 rounded-2xl overflow-hidden">
+            <div className="bg-white p-8">
+              <p className="text-sm font-semibold text-gray-900 mb-5">Attendees</p>
+              <ul className="space-y-3 text-sm text-gray-500">
+                <li>Browse and discover events</li>
+                <li>Register with one click</li>
+                <li>Get a QR code ticket</li>
+                <li>Show up and check in</li>
               </ul>
             </div>
-
-            {/* Organizer */}
-            <div className="group relative bg-gradient-to-br from-green-50 to-green-100/50 rounded-2xl p-8 border-2 border-green-200 hover:border-green-400 transition-all duration-300 hover:shadow-xl">
-              <div className="absolute top-4 right-4 w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Calendar className="w-6 h-6 text-green-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-green-700 mb-6">Organizers</h3>
-              <ul className="space-y-4 text-gray-700">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span>Create & manage events</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span>View registrations</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span>Scan QR codes</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span>Track attendance</span>
-                </li>
+            <div className="bg-white p-8">
+              <p className="text-sm font-semibold text-gray-900 mb-5">Organizers</p>
+              <ul className="space-y-3 text-sm text-gray-500">
+                <li>Create and edit events</li>
+                <li>View the registrant list</li>
+                <li>Scan QR codes at the door</li>
+                <li>Track attendance in real time</li>
               </ul>
             </div>
-
-            {/* Admin */}
-            <div className="group relative bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-2xl p-8 border-2 border-purple-200 hover:border-purple-400 transition-all duration-300 hover:shadow-xl">
-              <div className="absolute top-4 right-4 w-12 h-12 bg-purple-500/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Shield className="w-6 h-6 text-purple-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-purple-700 mb-6">Admins</h3>
-              <ul className="space-y-4 text-gray-700">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                  <span>Approve/reject events</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                  <span>Manage users</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                  <span>View statistics</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-600 font-bold">✓</span>
-                  <span>System oversight</span>
-                </li>
+            <div className="bg-white p-8">
+              <p className="text-sm font-semibold text-gray-900 mb-5">Admins</p>
+              <ul className="space-y-3 text-sm text-gray-500">
+                <li>Approve or reject events</li>
+                <li>Manage all user accounts</li>
+                <li>View platform-wide stats</li>
+                <li>Keep everything running</li>
               </ul>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* CTA */}
+      {!isAuthenticated && (
+        <section className="border-t border-gray-100">
+          <div ref={ctaRef as React.RefObject<HTMLDivElement>} className="reveal max-w-6xl mx-auto px-6 py-16 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-1">Ready to try it?</h2>
+              <p className="text-gray-500 text-sm">Free to use. No credit card needed.</p>
+            </div>
+            <button
+              onClick={() => navigate('/register')}
+              className="inline-block px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+            >
+              Create your account
+            </button>
+          </div>
+        </section>
+      )}
+
     </div>
   );
 };
