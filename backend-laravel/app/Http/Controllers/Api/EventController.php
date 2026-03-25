@@ -12,17 +12,19 @@ class EventController extends Controller
     {
         $query = Event::with('organizer');
 
-        if ($request->user()->role === 'organizer') {
+        $user = auth('sanctum')->user();
+
+        if (!$user || $user->role === 'attendee') {
+            // Unauthenticated visitors and attendees only see upcoming approved events
+            $query->where('status', 'approved')->where('date', '>=', now()->toDateString());
+        } elseif ($user->role === 'organizer') {
             // Organizers see only their own events (all statuses)
-            $query->where('organizer_id', $request->user()->id);
-        } elseif ($request->user()->role === 'admin') {
+            $query->where('organizer_id', $user->id);
+        } elseif ($user->role === 'admin') {
             // Admins can filter by status or see all
             if ($request->has('status')) {
                 $query->where('status', $request->status);
             }
-        } else {
-            // Attendees only see approved events
-            $query->where('status', 'approved');
         }
 
         $events = $query->latest()->get();
@@ -64,6 +66,14 @@ class EventController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        if ($event->status === 'approved') {
+            return response()->json(['message' => 'Approved events cannot be edited'], 403);
+        }
+
+        if ($event->date->isPast()) {
+            return response()->json(['message' => 'Expired events cannot be edited'], 403);
+        }
+
         $validated = $request->validate([
             'title' => 'string|max:255',
             'description' => 'string',
@@ -90,9 +100,17 @@ class EventController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        if ($event->status === 'approved') {
+            return response()->json(['message' => 'Approved events cannot be deleted'], 403);
+        }
+
+        if ($event->date->isPast()) {
+            return response()->json(['message' => 'Expired events cannot be deleted'], 403);
+        }
+
         $event->delete();
 
-        return response()->json(['message' => 'Event rejected successfully']);
+        return response()->json(['message' => 'Event deleted successfully']);
     }
 
     public function myEvents(Request $request)

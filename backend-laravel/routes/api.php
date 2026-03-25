@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/events', [EventController::class, 'index']);
 
 // Password Reset
 Route::post('/password/email', [PasswordResetController::class, 'sendResetLinkEmail']);
@@ -27,7 +28,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
 
     // Events
-    Route::get('/events', [EventController::class, 'index']);
     Route::get('/events/{event}', [EventController::class, 'show']);
     
     // Organizer & Admin only

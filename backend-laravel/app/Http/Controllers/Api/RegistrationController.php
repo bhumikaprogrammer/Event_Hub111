@@ -21,6 +21,10 @@ class RegistrationController extends Controller
             return response()->json(['message' => 'Organizers cannot register for their own events'], 403);
         }
 
+        if ($event->date->isPast()) {
+            return response()->json(['message' => 'Cannot register for a past event'], 400);
+        }
+
         if ($event->registered_count >= $event->capacity) {
             return response()->json(['message' => 'Event is full'], 400);
         }
