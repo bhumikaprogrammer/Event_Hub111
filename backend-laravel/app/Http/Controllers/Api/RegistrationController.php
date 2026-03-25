@@ -91,18 +91,6 @@ class RegistrationController extends Controller
         return response()->json($registrations);
     }
 
-    public function generateQrCode(Registration $registration)
-    {
-        // Ensure the logged-in user owns this registration
-        if (auth()->id() !== $registration->user_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $qrCode = QrCode::format('png')->size(250)->generate($registration->qr_code_data);
-
-        return response($qrCode)->header('Content-Type', 'image/png');
-    }
-
     public function myRegistrations(Request $request)
     {
         $registrations = Registration::where('user_id', $request->user()->id)

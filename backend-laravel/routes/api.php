@@ -55,5 +55,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/events/{event}/register', [RegistrationController::class, 'register']);
     Route::delete('/registrations/{registration}', [RegistrationController::class, 'cancel']);
     Route::get('/my-registrations', [RegistrationController::class, 'myRegistrations']);
-    Route::get('/registrations/{registration}/qrcode', [RegistrationController::class, 'generateQrCode']);
 });
