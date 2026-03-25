@@ -36,6 +36,17 @@ export const EventDetailsPage: React.FC = () => {
     }
   };
 
+  const handleCancelRegistration = async () => {
+    if (!userRegistration || !confirm('Are you sure you want to cancel your registration?')) return;
+    try {
+      await apiClient.cancelRegistration(userRegistration.id);
+      setUserRegistration(null);
+      setMessage({ type: 'success', text: 'Your registration has been cancelled.' });
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to cancel registration.' });
+    }
+  };
+
   const handleRegister = async () => {
     if (!user) {
       navigate('/login');
@@ -47,8 +58,7 @@ export const EventDetailsPage: React.FC = () => {
       setMessage(null);
       const registration = await apiClient.registerForEvent(eventId!);
       setUserRegistration(registration);
-      setEvent((prev) => prev ? { ...prev, registeredCount: prev.registeredCount + 1 } : prev);
-      setMessage({ type: 'success', text: 'Successfully registered! Your QR code is in your dashboard.' });
+      setMessage({ type: 'success', text: 'Registration submitted! Your request is pending approval by the organizer. You\'ll find your QR code in your dashboard once approved.' });
     } catch (error: any) {
       setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to register for event' });
     } finally {
@@ -75,6 +85,7 @@ export const EventDetailsPage: React.FC = () => {
   const availableSeats = event.capacity - event.registeredCount;
   const isFull = availableSeats <= 0;
   const isRegistered = !!userRegistration;
+  const isOrganizer = user?.id === event.organizerId || user?.role === 'admin';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -128,7 +139,10 @@ export const EventDetailsPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Date & Time</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {event.date} at {event.time}
+                    {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  </p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    {new Date(`1970-01-01T${event.time}`).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                   </p>
                 </div>
               </div>
@@ -185,14 +199,28 @@ export const EventDetailsPage: React.FC = () => {
 
             {/* Registration Button */}
             <div className="flex gap-4">
-              {isRegistered ? (
-                <button
-                  disabled
-                  className="flex-1 bg-green-600 text-white font-semibold py-3 px-6 rounded-lg cursor-default flex items-center justify-center gap-2"
-                >
-                  <CheckCircle className="w-5 h-5" />
-                  Registered
-                </button>
+              {isOrganizer ? null : isRegistered ? (
+                <>
+                  <button
+                    disabled
+                    className={`flex-1 text-white font-semibold py-3 px-6 rounded-lg cursor-default flex items-center justify-center gap-2 ${
+                      userRegistration?.status === 'approved'
+                        ? 'bg-green-600'
+                        : 'bg-yellow-500'
+                    }`}
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    {userRegistration?.status === 'approved' ? 'Registered' : 'Pending Approval'}
+                  </button>
+                  {userRegistration?.status === 'pending' && (
+                    <button
+                      onClick={handleCancelRegistration}
+                      className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200"
+                    >
+                      Cancel Registration
+                    </button>
+                  )}
+                </>
               ) : isFull ? (
                 <button
                   disabled
@@ -210,12 +238,6 @@ export const EventDetailsPage: React.FC = () => {
                 </button>
               )}
 
-              <button
-                onClick={() => navigate('/events')}
-                className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-200"
-              >
-                Cancel
-              </button>
             </div>
           </div>
         </div>

@@ -13,13 +13,11 @@ import { EventDetailsPage } from './pages/EventDetailsPage';
 import { OrganizerDashboard } from './pages/OrganizerDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { UnauthorizedPage } from './pages/UnauthorizedPage';
-import { EventAttendees } from './pages/EventAttendees';
 import { OrganizerEventAnalytics } from './pages/OrganizerEventAnalytics';
 import { OrganizerEventRegistrations } from './pages/OrganizerEventRegistrations';
 import { RoleDashboard } from './components/RoleDashboard';
 import { CheckInScanner } from './pages/CheckInScanner';
 import { CreateEventPage } from './pages/CreateEventPage';
-import ManageRegistrationsPage from './pages/ManageRegistrationsPage';
 
 function App() {
   return (
@@ -72,6 +70,14 @@ function App() {
             }
           />
           <Route
+            path="/events/:eventId/edit"
+            element={
+              <ProtectedRoute requiredRole="organizer">
+                <CreateEventPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/organizer/dashboard"
             element={
               <ProtectedRoute requiredRole="organizer">
@@ -89,11 +95,7 @@ function App() {
           />
           <Route
             path="/organizer/events/:eventId/attendees"
-            element={
-              <ProtectedRoute requiredRole="organizer">
-                <EventAttendees />
-              </ProtectedRoute>
-            }
+            element={<Navigate to="../registrations" replace />}
           />
           <Route
             path="/organizer/events/:eventId/registrations"
@@ -116,14 +118,6 @@ function App() {
             element={
               <ProtectedRoute requiredRole="organizer">
                 <CheckInScanner />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/manage/event/:eventId/registrations"
-            element={
-              <ProtectedRoute requiredRole="organizer">
-                <ManageRegistrationsPage />
               </ProtectedRoute>
             }
           />

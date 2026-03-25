@@ -63,8 +63,7 @@ export const OrganizerDashboard: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400">Manage your created events</p>
         </div>
         <Button onClick={() => navigate('/events/create')}>
-          <PlusCircle className="w-5 h-5 mr-2" />
-          Create Event
+          <span className="flex items-center gap-1.5"><PlusCircle className="w-5 h-5" />Create Event</span>
         </Button>
       </div>
 
@@ -79,7 +78,7 @@ export const OrganizerDashboard: React.FC = () => {
           {events.map((event) => (
             <Card key={event.id} padding="none" className="overflow-hidden">
               <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{event.title}</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{event.title}</h3>
                 <div className="flex items-center gap-2 text-gray-500 mb-2">
                   <Calendar className="w-4 h-4" />
                   <span>{new Date(event.date).toLocaleDateString()}</span>
@@ -106,13 +105,11 @@ export const OrganizerDashboard: React.FC = () => {
                 </div>
               </div>
               <div className="bg-gray-50 dark:bg-gray-700/50 px-6 py-3 flex justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={() => navigate(`/organizer/events/${event.id}/attendees`)}>
-                  <Eye className="w-4 h-4 mr-1.5" />
-                  Attendees
+                <Button variant="outline" size="sm" onClick={() => navigate(`/organizer/events/${event.id}/registrations`)}>
+                  <span className="flex items-center gap-1.5"><Eye className="w-4 h-4" />Attendees</span>
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => navigate(`/events/${event.id}/edit`)}>
-                  <Edit className="w-4 h-4 mr-1.5" />
-                  Edit
+                  <span className="flex items-center gap-1.5"><Edit className="w-4 h-4" />Edit</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -120,8 +117,7 @@ export const OrganizerDashboard: React.FC = () => {
                   onClick={() => handleDelete(event.id)}
                   className="text-red-600 border-red-500 hover:bg-red-50 dark:text-red-500 dark:border-red-600 dark:hover:bg-red-900/20"
                 >
-                  <Trash2 className="w-4 h-4 mr-1.5" />
-                  Delete
+                  <span className="flex items-center gap-1.5"><Trash2 className="w-4 h-4" />Delete</span>
                 </Button>
               </div>
             </Card>

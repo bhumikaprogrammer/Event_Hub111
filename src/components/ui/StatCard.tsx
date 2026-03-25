@@ -14,10 +14,10 @@ interface StatCardProps {
 }
 
 const variantMap = {
-  primary: 'text-primary-600 bg-primary-50',
-  success: 'text-green-600 bg-green-50',
-  warning: 'text-yellow-600 bg-yellow-50',
-  error: 'text-red-600 bg-red-50',
+  primary: 'text-primary-600 bg-primary-50 dark:bg-primary-900/30',
+  success: 'text-green-600 bg-green-50 dark:bg-green-900/30',
+  warning: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30',
+  error: 'text-red-600 bg-red-50 dark:bg-red-900/30',
 };
 
 export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, trend, variant = 'primary' }) => {
@@ -25,8 +25,8 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, tr
     <Card padding="md">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{title}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
           {trend && (
             <p className={`text-xs mt-2 ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
               {trend.isPositive ? '↑' : '↓'} {trend.value}

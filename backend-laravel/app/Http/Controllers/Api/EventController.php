@@ -12,12 +12,17 @@ class EventController extends Controller
     {
         $query = Event::with('organizer');
 
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
         if ($request->user()->role === 'organizer') {
+            // Organizers see only their own events (all statuses)
             $query->where('organizer_id', $request->user()->id);
+        } elseif ($request->user()->role === 'admin') {
+            // Admins can filter by status or see all
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            }
+        } else {
+            // Attendees only see approved events
+            $query->where('status', 'approved');
         }
 
         $events = $query->latest()->get();
@@ -33,6 +38,7 @@ class EventController extends Controller
             'date' => 'required|date',
             'time' => 'required',
             'venue' => 'required|string',
+            'category' => 'required|string',
             'type' => 'required|string',
             'capacity' => 'required|integer|min:1',
         ]);
@@ -54,7 +60,9 @@ class EventController extends Controller
 
     public function update(Request $request, Event $event)
     {
-        $this->authorize('update', $event);
+        if ($event->organizer_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
         $validated = $request->validate([
             'title' => 'string|max:255',
@@ -62,18 +70,26 @@ class EventController extends Controller
             'date' => 'date',
             'time' => 'string',
             'venue' => 'string',
+            'category' => 'string',
             'type' => 'string',
             'capacity' => 'integer|min:1',
         ]);
+
+        if ($event->status === 'rejected') {
+            $validated['status'] = 'pending';
+        }
 
         $event->update($validated);
 
         return response()->json($event);
     }
 
-    public function destroy(Event $event)
+    public function destroy(Request $request, Event $event)
     {
-        $this->authorize('delete', $event);
+        if ($event->organizer_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $event->delete();
 
         return response()->json(['message' => 'Event rejected successfully']);

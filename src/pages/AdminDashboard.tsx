@@ -70,8 +70,8 @@ export const AdminDashboard: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-        <p className="text-gray-600">Manage events, approve submissions, and view statistics</p>
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Admin Dashboard</h1>
+        <p className="text-gray-600 dark:text-gray-400">Manage events, approve submissions, and view statistics</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -101,15 +101,15 @@ export const AdminDashboard: React.FC = () => {
         }
       >
         {confirmModal && (
-          <p className="text-gray-700">
+          <p className="text-gray-700 dark:text-gray-300">
             Are you sure you want to {confirmModal.type} <strong>{confirmModal.event.title}</strong>?
           </p>
         )}
       </Modal>
 
       <Card padding="none">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Clock className="w-6 h-6 text-orange-600" />
             Pending Event Approvals
             <Badge variant="warning">{pendingEvents.length}</Badge>
@@ -124,15 +124,15 @@ export const AdminDashboard: React.FC = () => {
         ) : (
           <div className="divide-y divide-gray-100">
             {pendingEvents.map((event) => (
-              <div key={event.id} className="p-6 hover:bg-gray-50 transition">
+              <div key={event.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-start gap-3 mb-3">
-                      <h3 className="text-xl font-bold text-gray-900">{event.title}</h3>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">{event.title}</h3>
                       <Badge variant="neutral">{event.type}</Badge>
                     </div>
-                    <p className="text-gray-600 mb-3">{event.description}</p>
-                    <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400 mb-3">{event.description}</p>
+                    <div className="flex flex-wrap gap-3 text-sm text-gray-600 dark:text-gray-400">
                       <span>📅 {event.date} at {event.time}</span>
                       <span>📍 {event.venue}</span>
                       <span>👥 {event.capacity} capacity</span>

@@ -13,6 +13,14 @@ class RegistrationController extends Controller
 {
     public function register(Request $request, Event $event)
     {
+        if ($request->user()->role === 'admin') {
+            return response()->json(['message' => 'Admins cannot register for events'], 403);
+        }
+
+        if ($event->organizer_id === $request->user()->id) {
+            return response()->json(['message' => 'Organizers cannot register for their own events'], 403);
+        }
+
         if ($event->registered_count >= $event->capacity) {
             return response()->json(['message' => 'Event is full'], 400);
         }
@@ -96,18 +104,47 @@ class RegistrationController extends Controller
         return response()->json($registrations);
     }
 
-    public function approve(Request $request, Registration $registration)
+    public function cancel(Request $request, Registration $registration)
     {
-        // Ensure the authenticated user is the organizer of the event
-        $this->authorize('manage', $registration->event);
+        if ($registration->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
         if ($registration->status !== 'pending') {
-            return response()->json(['message' => 'Registration is not pending approval'], 400);
+            return response()->json(['message' => 'Only pending registrations can be cancelled'], 400);
+        }
+
+        $registration->delete();
+
+        return response()->json(['message' => 'Registration cancelled']);
+    }
+
+    public function destroy(Request $request, Registration $registration)
+    {
+        if ($registration->event->organizer_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($registration->status === 'approved') {
+            $registration->event()->decrement('registered_count');
+        }
+
+        $registration->delete();
+
+        return response()->json(['message' => 'Registration deleted']);
+    }
+
+    public function approve(Request $request, Registration $registration)
+    {
+        if ($registration->event->organizer_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($registration->status === 'approved') {
+            return response()->json(['message' => 'Registration is already approved'], 400);
         }
 
         $registration->update(['status' => 'approved']);
-
-        // Now increment the registered count for the event
         $registration->event()->increment('registered_count');
 
         return response()->json($registration);
@@ -115,11 +152,16 @@ class RegistrationController extends Controller
 
     public function reject(Request $request, Registration $registration)
     {
-        // Ensure the authenticated user is the organizer of the event
-        $this->authorize('manage', $registration->event);
+        if ($registration->event->organizer_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
-        if ($registration->status !== 'pending') {
-            return response()->json(['message' => 'Registration is not pending approval'], 400);
+        if ($registration->status === 'rejected') {
+            return response()->json(['message' => 'Registration is already rejected'], 400);
+        }
+
+        if ($registration->status === 'approved') {
+            $registration->event()->decrement('registered_count');
         }
 
         $registration->update(['status' => 'rejected']);

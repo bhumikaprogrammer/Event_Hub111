@@ -68,7 +68,7 @@ class APIClient {
 
   // Event endpoints
   async getApprovedEvents(filters?: { date?: string; type?: string; venue?: string }): Promise<Event[]> {
-    const response = await this.client.get('/events', { params: { ...filters, status: 'approved' } });
+    const response = await this.client.get('/events', { params: filters });
     return response.data;
   }
 
@@ -124,6 +124,24 @@ class APIClient {
 
   async getAttendeeRegistrations(_userId: string): Promise<Registration[]> {
     const response = await this.client.get('/my-registrations');
+    return response.data;
+  }
+
+  async cancelRegistration(registrationId: string): Promise<void> {
+    await this.client.delete(`/registrations/${registrationId}`);
+  }
+
+  async deleteRegistration(registrationId: string): Promise<void> {
+    await this.client.delete(`/registrations/${registrationId}/force`);
+  }
+
+  async approveRegistration(registrationId: string): Promise<Registration> {
+    const response = await this.client.post(`/registrations/${registrationId}/approve`);
+    return response.data;
+  }
+
+  async rejectRegistration(registrationId: string): Promise<Registration> {
+    const response = await this.client.post(`/registrations/${registrationId}/reject`);
     return response.data;
   }
 

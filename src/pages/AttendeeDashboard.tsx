@@ -81,6 +81,16 @@ export const AttendeeDashboard: React.FC = () => {
     }
   };
 
+  const handleCancel = async (registrationId: string) => {
+    if (!confirm('Are you sure you want to cancel this registration?')) return;
+    try {
+      await apiClient.cancelRegistration(registrationId);
+      setRegistrations((prev) => prev.filter((r) => r.id !== registrationId));
+    } catch (error) {
+      console.error('Failed to cancel registration:', error);
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     if (status === 'checked_in') return <CheckCircle className="w-4 h-4" />;
     return <Clock className="w-4 h-4" />;
@@ -130,12 +140,26 @@ export const AttendeeDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  <Badge
-                    color={registration.attendanceStatus === 'checked_in' ? 'green' : 'gray'} // Fix: use camelCase
-                    className="inline-flex items-center gap-2 capitalize"
-                  >
-                    {getStatusIcon(registration.attendanceStatus)} {registration.attendanceStatus.replace('_', ' ')} 
-                  </Badge>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Badge
+                      variant={registration.attendanceStatus === 'checked_in' ? 'success' : 'neutral'}
+                      className="inline-flex items-center gap-2 capitalize"
+                    >
+                      {getStatusIcon(registration.attendanceStatus)} {registration.attendanceStatus.replace('_', ' ')}
+                    </Badge>
+                    {registration.status === 'pending' && (
+                      <Badge variant="warning" className="capitalize">Pending Approval</Badge>
+                    )}
+                    {registration.status === 'pending' && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleCancel(registration.id)}
+                      >
+                        Cancel Registration
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="p-4 bg-white rounded-lg">
                   <QrCodeImage registrationId={registration.id} />

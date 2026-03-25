@@ -40,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/my-events', [EventController::class, 'myEvents']); // New route for organizers
         Route::post('/registrations/{registration}/approve', [RegistrationController::class, 'approve']);
         Route::post('/registrations/{registration}/reject', [RegistrationController::class, 'reject']);
+        Route::delete('/registrations/{registration}/force', [RegistrationController::class, 'destroy']);
     });
 
     // Admin only
@@ -51,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Attendee routes
     Route::post('/events/{event}/register', [RegistrationController::class, 'register']);
+    Route::delete('/registrations/{registration}', [RegistrationController::class, 'cancel']);
     Route::get('/my-registrations', [RegistrationController::class, 'myRegistrations']);
     Route::get('/registrations/{registration}/qrcode', [RegistrationController::class, 'generateQrCode']);
 });
