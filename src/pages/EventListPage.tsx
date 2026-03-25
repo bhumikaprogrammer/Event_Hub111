@@ -33,8 +33,14 @@ export const EventListPage: React.FC = () => {
         apiClient.getApprovedEvents(),
         user ? apiClient.getAttendeeRegistrations(user.id) : Promise.resolve([]),
       ]);
-      setEvents(data);
-      setFilteredEvents(data);
+      // Attendees only see upcoming — organizer/admin see all (including expired)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const visible = (user?.role === 'organizer' || user?.role === 'admin')
+        ? data
+        : data.filter((e) => new Date(e.date) >= today);
+      setEvents(visible);
+      setFilteredEvents(visible);
       setMyRegistrations(regs);
     } catch (err) {
       console.error('Error fetching events:', err);

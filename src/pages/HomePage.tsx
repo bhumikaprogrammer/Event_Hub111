@@ -51,12 +51,8 @@ export const HomePage: React.FC = () => {
     }).catch(() => {});
   }, []);
 
-  const handleEventClick = (eventId: string) => {
-    if (isAuthenticated) {
-      navigate(`/events/${eventId}`);
-    } else {
-      navigate('/login');
-    }
+  const handleEventClick = (eventId: string | number) => {
+    navigate(`/events/${eventId}`);
   };
 
   const formatDate = (dateStr: string) =>
@@ -80,6 +76,7 @@ export const HomePage: React.FC = () => {
   };
 
   // Duplicate for seamless infinite scroll
+  const [scrollPaused, setScrollPaused] = React.useState(false);
   const scrollItems = events.length > 0 ? [...events, ...events] : [];
   // ~3s per card, minimum 8s
   const scrollDuration = Math.max(8, events.length * 3);
@@ -125,7 +122,11 @@ export const HomePage: React.FC = () => {
 
             {/* Right: Live scrolling events */}
             <div className="animate-fade-up animate-fade-up-5 hidden lg:block">
-              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 h-80 overflow-hidden relative">
+              <div
+                className="bg-gray-50 border border-gray-200 rounded-2xl p-4 h-[560px] overflow-hidden relative"
+                onMouseEnter={() => setScrollPaused(true)}
+                onMouseLeave={() => setScrollPaused(false)}
+              >
                 {events.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full gap-5 px-6 select-none">
                     {/* Ticket stub */}
@@ -161,7 +162,7 @@ export const HomePage: React.FC = () => {
 
                     <div
                       className="space-y-3"
-                      style={{ animation: `scroll-up ${scrollDuration}s linear infinite` }}
+                      style={{ animation: `scroll-up ${scrollDuration}s linear infinite`, animationPlayState: scrollPaused ? 'paused' : 'running' }}
                     >
                       {scrollItems.map((event, i) => {
                         const badge = statusBadge(event);

@@ -81,44 +81,56 @@ export const OrganizerDashboard: React.FC = () => {
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{event.title}</h3>
                 <div className="flex items-center gap-2 text-gray-500 mb-2">
                   <Calendar className="w-4 h-4" />
-                  <span>{new Date(event.date).toLocaleDateString()}</span>
+                  <span>{new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-500 mb-4">
                   <MapPin className="w-4 h-4" />
                   <span>{event.venue}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${
-                      event.status === 'approved'
-                        ? 'bg-green-100 text-green-800'
-                        : event.status === 'rejected'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                    {event.status}
-                  </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${
+                        event.status === 'approved'
+                          ? 'bg-green-100 text-green-800'
+                          : event.status === 'rejected'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                      {event.status}
+                    </span>
+                    {new Date(event.date) < new Date(new Date().toDateString()) && (
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
+                        Expired
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 text-gray-600">
                     <Users className="w-4 h-4" />
                     <span>{event.registeredCount || 0}</span>
                   </div>
                 </div>
+
               </div>
               <div className="bg-gray-50 dark:bg-gray-700/50 px-6 py-3 flex justify-end gap-2">
                 <Button variant="outline" size="sm" onClick={() => navigate(`/organizer/events/${event.id}/registrations`)}>
                   <span className="flex items-center gap-1.5"><Eye className="w-4 h-4" />Attendees</span>
                 </Button>
-<Button variant="outline" size="sm" onClick={() => navigate(`/events/${event.id}/edit`)}>
-                  <span className="flex items-center gap-1.5"><Edit className="w-4 h-4" />Edit</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDelete(event.id)}
-                  className="text-red-600 border-red-500 hover:bg-red-50 dark:text-red-500 dark:border-red-600 dark:hover:bg-red-900/20"
-                >
-                  <span className="flex items-center gap-1.5"><Trash2 className="w-4 h-4" />Delete</span>
-                </Button>
+{event.status !== 'approved' && new Date(event.date) >= new Date(new Date().toDateString()) && (
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/events/${event.id}/edit`)}>
+                    <span className="flex items-center gap-1.5"><Edit className="w-4 h-4" />Edit</span>
+                  </Button>
+                )}
+                {event.status !== 'approved' && new Date(event.date) >= new Date(new Date().toDateString()) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete(event.id)}
+                    className="text-red-600 border-red-500 hover:bg-red-50 dark:text-red-500 dark:border-red-600 dark:hover:bg-red-900/20"
+                  >
+                    <span className="flex items-center gap-1.5"><Trash2 className="w-4 h-4" />Delete</span>
+                  </Button>
+                )}
               </div>
             </Card>
           ))}

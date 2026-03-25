@@ -26,6 +26,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, existingRegistratio
   const availableSeats = event.capacity - event.registeredCount;
   const fillPercentage = (event.registeredCount / event.capacity) * 100;
   const isOrganizer = String(user?.id) === String(event.organizerId);
+  const isExpired = new Date(event.date) < new Date(new Date().toDateString());
 
   const handleRegister = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click-through
@@ -83,10 +84,13 @@ export const EventCard: React.FC<EventCardProps> = ({ event, existingRegistratio
             </span>
           </div>
           {(isOrganizer || user?.role === 'admin') && (
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
               <Badge variant={event.status === 'approved' ? 'success' : event.status === 'rejected' ? 'error' : 'warning'}>
                 {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
               </Badge>
+              {new Date(event.date) < new Date(new Date().toDateString()) && (
+                <Badge variant="neutral">Expired</Badge>
+              )}
             </div>
           )}
         </div>
@@ -109,7 +113,11 @@ export const EventCard: React.FC<EventCardProps> = ({ event, existingRegistratio
           <Button variant="secondary" size="md" onClick={() => navigate(`/events/${event.id}`)} className="flex-1">
             View Details
           </Button>
-          {String(user?.id) !== String(event.organizerId) && user?.role !== 'admin' && (availableSeats > 0 ? (
+          {String(user?.id) !== String(event.organizerId) && user?.role !== 'admin' && (isExpired ? (
+            <Button variant="outline" size="md" disabled className="flex-1">
+              Expired
+            </Button>
+          ) : availableSeats > 0 ? (
             <Button
               variant={registrationStatus === 'success'
                 ? currentRegistration?.status === 'approved' ? 'success' : 'warning'
